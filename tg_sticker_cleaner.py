@@ -1,28 +1,30 @@
+# main.py
 from telethon import TelegramClient, events
+from telethon.tl.types import DocumentAttributeSticker, InputStickerSetID
 
-# Вставь свои значения
 api_id = 22785739
 api_hash = 'f96f6fc8bcbbe523dc93339fdd130b3c'
 
 client = TelegramClient('sticker_filter', api_id, api_hash)
 
-# Цель — юзер @Armoredb_user
 target_username = 'Armoredb_user'
-target_emoji = '😡'
+target_pack_id = 4798983069690233625
+target_access_hash = -4231871290391784105
 
 @client.on(events.NewMessage(incoming=True))
 async def handle(event):
     sender = await event.get_sender()
 
-    # Проверка: от нужного пользователя и сообщение — стикер
     if sender.username == target_username and event.sticker:
-        # Проверка на нужное emoji
-        if event.file.emoji == target_emoji:
-            await event.delete()
-            print(f'Удалён стикер с эмоджи {target_emoji} от @{target_username}')
-            # Если хочешь, добавь ответ:
-            # await event.respond("Удалён стикер с эмоджи 😡.")
+        for attr in event.document.attributes:
+            if isinstance(attr, DocumentAttributeSticker):
+                sticker_set = attr.stickerset
+                if isinstance(sticker_set, InputStickerSetID):
+                    if (sticker_set.id == target_pack_id and
+                            sticker_set.access_hash == target_access_hash):
+                        await event.delete()
+                        print(f"Удалён стикер из приватного пака от @{target_username}")
 
 client.start()
-print("Скрипт запущен. Ожидаем сообщения...")
+print("Скрипт запущен. Жду стикер от цели...")
 client.run_until_disconnected()
