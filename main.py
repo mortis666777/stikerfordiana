@@ -8,7 +8,7 @@ from telethon.tl.types import DocumentAttributeSticker, InputStickerSetID
 api_id = 22785739
 api_hash = 'f96f6fc8bcbbe523dc93339fdd130b3c'
 
-session_name = 'armored_user'  # Name of your saved .session file
+session_name = 'armored_user_session'  # Name of your saved .session file
 
 target_username = 'Armoredb_user'
 target_pack_id = 4798983069690233625
