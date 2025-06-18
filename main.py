@@ -5,7 +5,7 @@ import asyncio
 from telethon import TelegramClient, events
 from telethon.tl.types import DocumentAttributeSticker, InputStickerSetID
 
-# Настройка логгера
+# Настройка логгера 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s')
 logger = logging.getLogger(__name__)
 
