@@ -1,32 +1,28 @@
+from flask import Flask
 from telethon import TelegramClient, events
 from telethon.tl.types import DocumentAttributeSticker, InputStickerSetID
-from flask import Flask
-from threading import Thread
 import asyncio
+import threading
 
-# === Telegram API credentials ===
+# Flask-приложение
+app = Flask(__name__)
+
+@app.route("/")
+def index():
+    return "✅ Bot is running..."
+
+# Telegram конфигурация
 api_id = 22785739
 api_hash = 'f96f6fc8bcbbe523dc93339fdd130b3c'
+session_name = 'armored_user_session'
 
-# Название сессии (создастся файл sticker_cleaner.session)
-client = TelegramClient('sticker_cleaner', api_id, api_hash)
+client = TelegramClient(session_name, api_id, api_hash)
 
-# === Настройки таргета ===
+# Целевой пользователь и стикерпак
 target_username = 'Armoredb_user'
 target_pack_id = 4798983069690233625
 target_access_hash = -4231871290391784105
 
-# === Flask сервер — для Render ===
-app = Flask(__name__)
-
-@app.route('/')
-def index():
-    return "Telegram Sticker Cleaner is running."
-
-def run_flask():
-    app.run(host='0.0.0.0', port=8080)
-
-# === Логика удаления стикеров ===
 @client.on(events.NewMessage(incoming=True))
 async def handle(event):
     sender = await event.get_sender()
@@ -35,17 +31,21 @@ async def handle(event):
             if isinstance(attr, DocumentAttributeSticker):
                 sticker_set = attr.stickerset
                 if isinstance(sticker_set, InputStickerSetID):
-                    if (sticker_set.id == target_pack_id and
+                    if (sticker_set.id == target_pack_id and 
                         sticker_set.access_hash == target_access_hash):
                         await event.delete()
-                        print(f"[LOG] Удалён стикер от @{target_username} из таргет-пака.")
+                        print(f"❌ Стикер от @{target_username} удалён")
 
-# === Основная точка входа ===
+# Асинхронная функция для запуска Flask в фоновом потоке
+def start_flask():
+    app.run(host="0.0.0.0", port=8080)
+
+# Основной запуск
 async def main():
+    threading.Thread(target=start_flask).start()
     await client.start()
-    print("🟢 Бот запущен и слушает события...")
+    print("🤖 Бот запущен и слушает события...")
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
-    Thread(target=run_flask).start()
     asyncio.run(main())
