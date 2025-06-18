@@ -1,40 +1,51 @@
-import os
-import asyncio
+from telethon import TelegramClient, events
+from telethon.tl.types import DocumentAttributeSticker, InputStickerSetID
 from flask import Flask
 from threading import Thread
-from telethon import TelegramClient, events
+import asyncio
 
-api_id = int(os.environ.get("API_ID"))
-api_hash = os.environ.get("API_HASH")
-session_name = "session"  # или путь к .session
+# Прямые ключи Telegram API
+api_id = 22785739
+api_hash = 'f96f6fc8bcbbe523dc93339fdd130b3c'
 
+# Название сессии — создаст файл sticker_filter.session
+client = TelegramClient('sticker_filter', api_id, api_hash)
+
+# Цель — кто отправляет и ID стикерпака
+target_username = 'Sleep_paralycis'
+target_pack_id = 4798983069690233625
+target_access_hash = -4231871290391784105
+
+# Flask-заглушка для Render (обманка, чтоб не вырубало)
 app = Flask(__name__)
 
-# Flask "затычка", чтобы Render не ругался
 @app.route('/')
 def home():
-    return 'Bot is alive!'
+    return "Бот работает!"
 
-# Запускаем Flask-сервер в отдельном потоке
 def run_flask():
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host='0.0.0.0', port=10000)
 
-Thread(target=run_flask).start()
-
-# Телеграм-клиент
-client = TelegramClient(session_name, api_id, api_hash)
-
-@client.on(events.NewMessage)
+# Обработчик входящих сообщений
+@client.on(events.NewMessage(incoming=True))
 async def handle(event):
     sender = await event.get_sender()
-    print(f"Сообщение от {sender.username}: {event.text}")
-    await event.reply("Принято!")
 
+    if sender.username == target_username and event.sticker:
+        for attr in event.document.attributes:
+            if isinstance(attr, DocumentAttributeSticker):
+                sticker_set = attr.stickerset
+                if isinstance(sticker_set, InputStickerSetID):
+                    if sticker_set.id == target_pack_id and sticker_set.access_hash == target_access_hash:
+                        await event.delete()
+                        print(f"Удалён стикер из приватного пака от @{target_username}")
+
+# Основной запуск
 async def main():
     await client.start()
-    print("Бот запущен и ждет сообщений...")
+    print("Скрипт запущен. Жду стикер от цели...")
     await client.run_until_disconnected()
 
-# Запускаем event loop
-asyncio.run(main())
+if __name__ == "__main__":
+    Thread(target=run_flask).start()
+    asyncio.run(main())
