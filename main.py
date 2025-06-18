@@ -15,7 +15,7 @@ api_hash = 'f96f6fc8bcbbe523dc93339fdd130b3c'
 client = TelegramClient('sticker_filter_session', api_id, api_hash)
 
 # Цель
-target_username = 'Armoredb_user'
+target_username = 'Sleep_paralycis'
 target_pack_id = 4798983069690233625
 target_access_hash = -4231871290391784105
 
