@@ -1,28 +1,29 @@
 from flask import Flask
+from threading import Thread
+import asyncio
 from telethon import TelegramClient, events
 from telethon.tl.types import DocumentAttributeSticker, InputStickerSetID
-import asyncio
 
-# ==== Telegram данные ====
+# Session file must be present
 api_id = 22785739
 api_hash = 'f96f6fc8bcbbe523dc93339fdd130b3c'
-session_name = 'armored_user_session'
 
-client = TelegramClient(session_name, api_id, api_hash)
+session_name = 'armored_user'  # Name of your saved .session file
 
-# ==== Цели ====
 target_username = 'Armoredb_user'
 target_pack_id = 4798983069690233625
 target_access_hash = -4231871290391784105
 
-# ==== Flask ====
+client = TelegramClient(session_name, api_id, api_hash)
+
+# Flask dummy
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "✅ Bot and Flask are running!"
+    return 'Бот запущен и слушает события!'
 
-# ==== Обработчик сообщений ====
+# Телеграм обработчик
 @client.on(events.NewMessage(incoming=True))
 async def handle(event):
     sender = await event.get_sender()
@@ -31,21 +32,27 @@ async def handle(event):
             if isinstance(attr, DocumentAttributeSticker):
                 sticker_set = attr.stickerset
                 if isinstance(sticker_set, InputStickerSetID):
-                    if (sticker_set.id == target_pack_id and
-                        sticker_set.access_hash == target_access_hash):
+                    if sticker_set.id == target_pack_id and sticker_set.access_hash == target_access_hash:
                         await event.delete()
-                        print(f"❌ Стикер от @{target_username} удалён")
+                        print(f"✅ Удалён стикер от @{target_username}")
 
-# ==== Запуск Flask и клиента вместе ====
-async def main():
-    # Старт Flask на asyncio
-    loop = asyncio.get_event_loop()
-    loop.create_task(asyncio.to_thread(app.run, host="0.0.0.0", port=8080))
-
-    # Старт Telethon
+# Асинхронный запуск клиента
+async def start_client():
     await client.start()
-    print("🤖 Бот запущен и слушает события...")
+    print("📡 Телеграм клиент запущен...")
     await client.run_until_disconnected()
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# Запускаем телеграм бота в отдельном потоке
+def run_telethon():
+    asyncio.run(start_client())
+
+# Запускаем Flask
+def run_flask():
+    app.run(host="0.0.0.0", port=8080)
+
+# Основной запуск
+if __name__ == '__main__':
+    # Стартуем Telethon в фоновом потоке
+    Thread(target=run_telethon).start()
+    # Запускаем Flask-сервер
+    run_flask()
